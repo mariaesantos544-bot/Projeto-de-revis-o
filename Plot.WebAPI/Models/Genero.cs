@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 
 namespace Plot.WebAPI.Models;
@@ -16,6 +17,7 @@ public partial class Genero
     [Unicode(false)]
     public string Nome { get; set; } = null!;
 
+    [JsonIgnore]
     [ForeignKey("IdGenero")]
     [InverseProperty("IdGenero")]
     public virtual ICollection<Filme> IdFilme { get; set; } = new List<Filme>();

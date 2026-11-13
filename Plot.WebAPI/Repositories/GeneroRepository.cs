@@ -7,9 +7,9 @@ namespace Plot.WebAPI.Repositories;
 
 public class GeneroRepository : IGeneroRepository
 {
-    private readonly EventContext _context;
+    private readonly PlotDBContext _context;
 
-    public GeneroRepository(EventContext context)
+    public GeneroRepository(PlotDBContext context)
     {
         _context = context;
     }

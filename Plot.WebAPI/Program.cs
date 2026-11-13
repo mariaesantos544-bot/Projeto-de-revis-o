@@ -1,4 +1,5 @@
 
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Plot.WebAPI.BdContextEvent;
@@ -10,7 +11,7 @@ using Plot.WebAPI.Utils;
 var builder = WebApplication.CreateBuilder(args);
 
 
-builder.Services.AddDbContext<EventContext>(options =>
+builder.Services.AddDbContext<PlotDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? throw new InvalidOperationException("Configure a ConnectionString")));
 
@@ -25,7 +26,11 @@ builder.Services.Configure<CloudinarySettings>(
 builder.Services.AddScoped<IImageService, CloudinaryService>();
 
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddEndpointsApiExplorer();
 
 

@@ -8,9 +8,9 @@ namespace Plot.WebAPI.Repositories;
 
 public class UsuarioRepository : IUsuarioRepository
 {
-    private readonly EventContext _context;
+    private readonly PlotDBContext _context;
 
-    public UsuarioRepository(EventContext context)
+    public UsuarioRepository(PlotDBContext context)
     {
         _context = context;
     }

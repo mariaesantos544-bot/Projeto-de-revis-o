@@ -1,3 +1,4 @@
+
 using Microsoft.AspNetCore.Mvc;
 using Plot.WebAPI.DTO;
 using Plot.WebAPI.Interfaces;
@@ -74,6 +75,60 @@ namespace Plot.WebAPI.Controllers
             }
 
             return CreatedAtAction(nameof(BuscarPorId), new { id = filme.IdFilme }, filme);
+        }
+
+        [HttpPut("{id:int}")]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(11 * 1024 * 1024)]
+        public async Task<IActionResult> Atualizar(int id, [FromForm] FilmeDTO dto)
+        {
+            var atual = await _filmeRepository.BuscarPorId(id);
+            if (atual is null) return NotFound();
+
+            var idsGeneros = dto.IdGeneros ?? atual.IdGenero.Select(g => g.IdGenero).ToList();
+            var generos = await BuscarGeneros(idsGeneros);
+            if (generos is null) return BadRequest("Um ou mais IDs não existem.");
+
+            var temArquivo = dto.ArquivoImagem is not null && dto.ArquivoImagem.Length > 0;
+
+            if (temArquivo && !_imageService.IsConfigured)
+                return Problem("Configure as credenciais do Cloudinary para enviar imagens.", statusCode: 503);
+
+            string? novaUrl = null;
+            try
+            {
+                if (temArquivo)
+                    novaUrl = await _imageService.UploadImageAsync(dto.ArquivoImagem!, ImageFolder.Filmes);
+            }
+            catch (ArgumentException erro) { return BadRequest(erro.Message); }
+            catch (HttpRequestException) { return Problem("Falha ao enviar a capa ao Cloudinary.", statusCode: 502); }
+
+            var imagem = novaUrl ?? (string.IsNullOrWhiteSpace(dto.ImagemCapa) ? atual.ImagemCapa : dto.ImagemCapa);
+
+            try
+            {
+                await _filmeRepository.Atualizar(id, Converter(dto, generos, imagem));
+            }
+            catch
+            {
+                if (novaUrl is not null) await _imageService.DeleteImageAsync(novaUrl);
+                throw;
+            }
+
+            if(!string.IsNullOrWhiteSpace(atual.ImagemCapa!) && atual.ImagemCapa != imagem)
+            await _imageService.DeleteImageAsync(atual.ImagemCapa);
+            return NoContent();
+        }
+
+        [HttpDelete("{id:int}")]
+            public async Task<IActionResult> Excluir(int id)
+        {
+            var filme = await _filmeRepository.BuscarPorId(id);
+            if (filme is null) return NotFound();
+            await _filmeRepository.Excluir(id);
+            if (!string.IsNullOrWhiteSpace(filme.ImagemCapa))
+                await _imageService.DeleteImageAsync(filme.ImagemCapa);
+            return NoContent();
         }
 
         private async Task<List<Genero>?> BuscarGeneros(List<int>? idGeneros)

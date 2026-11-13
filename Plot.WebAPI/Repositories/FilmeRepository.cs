@@ -7,9 +7,9 @@ namespace Plot.WebAPI.Repositories;
 
 public class FilmeRepository : IFilmeRepository
 {
-    private readonly EventContext _context;
+    private readonly PlotDBContext _context;
 
-    public FilmeRepository(EventContext context)
+    public FilmeRepository(PlotDBContext context)
     {
         _context = context;
     }
