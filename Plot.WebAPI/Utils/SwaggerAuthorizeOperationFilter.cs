@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.OpenApi;
-using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
-
 
 namespace Plot.WebAPI.Utils
 {
@@ -12,12 +10,9 @@ namespace Plot.WebAPI.Utils
         {
             var method = context.MethodInfo;
 
-
             var anonymous = method.IsDefined(typeof(AllowAnonymousAttribute), true) || (method.DeclaringType?.IsDefined(typeof(AllowAnonymousAttribute), true) ?? false);
 
-
             var authorize = method.IsDefined(typeof(AuthorizeAttribute), true) || (method.DeclaringType?.IsDefined(typeof(AuthorizeAttribute), true) ?? false);
-
 
             if (anonymous || !authorize) return;
 

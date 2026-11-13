@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Plot.WebAPI.DTO;
 using Plot.WebAPI.Interfaces;
 using Plot.WebAPI.Models;
 
@@ -20,7 +22,6 @@ public class GeneroController : ControllerBase
     /// Lista todos os gêneros em ordem de nome
     /// </summary>
     /// <returns>Lista de gêneros</returns>
-
     [HttpGet]
     public async Task<IActionResult> Listar() => Ok(await _generoRepository.Listar());
 
@@ -28,7 +29,7 @@ public class GeneroController : ControllerBase
     public async Task<IActionResult> BuscarPorId(int id)
     {
         var genero = await _generoRepository.BuscarPorId(id);
-        if genero is null ? return NotFound() : Ok(genero);
+        return genero is null ? NotFound() : Ok(genero);
     }
 
     [HttpPost]
@@ -37,6 +38,21 @@ public class GeneroController : ControllerBase
         var genero = new Genero { Nome = dto.Nome };
         await _generoRepository.Cadastrar(genero);
         return CreatedAtAction(nameof(BuscarPorId), new { id = genero.IdGenero }, genero);
+    }
 
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Atualizar(int id, [FromBody] GeneroDTO dto)
+    {
+        if (await _generoRepository.BuscarPorId(id) is null) return NotFound();
+        await _generoRepository.Atualizar(id, new Genero { Nome = dto.Nome });
+        return NoContent();
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Excluir(int id)
+    { 
+        if (await _generoRepository.BuscarPorId(id) is null) return NotFound();
+        await _generoRepository.Excluir(id);
+        return NoContent();
     }
 }

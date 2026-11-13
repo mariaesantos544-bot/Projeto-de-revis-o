@@ -1,0 +1,98 @@
+﻿
+using Microsoft.AspNetCore.Mvc;
+using Plot.WebAPI.DTO;
+using Plot.WebAPI.Interfaces;
+using Plot.WebAPI.Models;
+using Plot.WebAPI.Services;
+
+namespace Plot.WebAPI.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class FilmeController : Controller
+    {
+        private readonly IFilmeRepository _filmeRepository;
+
+        private readonly IGeneroRepository _generoRepository;
+        private readonly IImageService _imageService;
+
+        public FilmeController(IFilmeRepository filmeRepository, IGeneroRepository generoRepository, IImageService imageService)
+        {
+            _filmeRepository = filmeRepository;
+            _generoRepository = generoRepository;
+            _imageService = imageService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Listar([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10, [FromQuery] string? busca = null)
+        {
+            if (pagina < 1 || tamanhoPagina < 1 || tamanhoPagina > 100)
+                return BadRequest("Página deve ser positiva e o tamanhoPagina deve estar entre 1 e 100.");
+
+            var (items, total) = await _filmeRepository.ListarPaginado(pagina, tamanhoPagina, busca);
+            return Ok(new { items, total, pagina, tamanhoPagina });
+
+        }
+
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> BuscarPorId(int id)
+        {
+            var filme = await _filmeRepository.BuscarPorId(id);
+            return filme is null ? NotFound() : Ok(filme);
+        }
+
+        [HttpPost]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(11 * 1024 * 1024)]
+        public async Task<IActionResult> Cadastrar([FromForm] FilmeDTO dto)
+        {
+            var generos = await BuscarGeneros(dto.IdGeneros ?? new List<int>());
+            if (generos is null) return BadRequest("Um ou mais IDs não existem.");
+
+            if (dto.ArquivoImagem is not null && !_imageService.IsConfigured)
+                return Problem("Configure as credenciais do Cloudinary para enviar imagens.", statusCode: 503);
+
+            string? novaUrl = null;
+            try
+            {
+                if (dto.ArquivoImagem is not null)
+                    novaUrl = await _imageService.UploadImageAsync(dto.ArquivoImagem, ImageFolder.Filmes);
+            }
+
+            catch (ArgumentException erro) { return BadRequest(erro.Message); }
+            catch (HttpRequestException) { return Problem("Falha ao enviar a capa ao Cloudinary.", statusCode: 502); }
+
+            var imagem = string.IsNullOrWhiteSpace(dto.ImagemCapa) ? novaUrl : dto.ImagemCapa;
+            var filme = Converter(dto, generos, novaUrl ?? imagem);
+
+            try
+            {
+                await _filmeRepository.Cadastrar(filme);
+            }
+            catch
+            {
+                if (novaUrl is not null) await _imageService.DeleteImageAsync(novaUrl);
+                throw;
+            }
+
+            return CreatedAtAction(nameof(BuscarPorId), new { id = filme.IdFilme }, filme);
+        }
+
+        private async Task<List<Genero>?> BuscarGeneros(List<int>? idGeneros)
+        {
+            var distintos = idGeneros?.Distinct().ToArray() ?? Array.Empty<int>();
+            var generos = await _generoRepository.BuscarPorIds(distintos);
+            return generos.Count == distintos.Length ? generos : null;
+        }
+
+        private static Filme Converter(FilmeDTO dto, List<Genero> generos, string? imagemCapa) => new Filme
+        {
+            Titulo = dto.Titulo,
+            Sinopse = dto.Sinopse,
+            DataLancamento = dto.DataLancamento,
+            Duracao = dto.Duracao,
+            ImagemCapa = imagemCapa,
+            IdGenero = generos
+        };
+    }
+}

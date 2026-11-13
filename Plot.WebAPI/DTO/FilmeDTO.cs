@@ -17,7 +17,7 @@ public class FilmeDTO : IValidatableObject
     [Range(1, int.MaxValue, ErrorMessage = "A duração do filme deve ser positiva")]
     public int Duracao { get; set; }
 
-    public string ImagemCapa { get; set; } = string.Empty;
+    public string? ImagemCapa { get; set; } = string.Empty;
 
     public IFormFile? ArquivoImagem { get; set; }
 
