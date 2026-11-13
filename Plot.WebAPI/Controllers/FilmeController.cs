@@ -1,4 +1,3 @@
-﻿
 using Microsoft.AspNetCore.Mvc;
 using Plot.WebAPI.DTO;
 using Plot.WebAPI.Interfaces;
@@ -12,7 +11,6 @@ namespace Plot.WebAPI.Controllers
     public class FilmeController : Controller
     {
         private readonly IFilmeRepository _filmeRepository;
-
         private readonly IGeneroRepository _generoRepository;
         private readonly IImageService _imageService;
 
@@ -31,7 +29,6 @@ namespace Plot.WebAPI.Controllers
 
             var (items, total) = await _filmeRepository.ListarPaginado(pagina, tamanhoPagina, busca);
             return Ok(new { items, total, pagina, tamanhoPagina });
-
         }
 
         [HttpGet("{id:int}")]
@@ -49,16 +46,17 @@ namespace Plot.WebAPI.Controllers
             var generos = await BuscarGeneros(dto.IdGeneros ?? new List<int>());
             if (generos is null) return BadRequest("Um ou mais IDs não existem.");
 
-            if (dto.ArquivoImagem is not null && !_imageService.IsConfigured)
+            var temArquivo = dto.ArquivoImagem is not null && dto.ArquivoImagem.Length > 0;
+
+            if (temArquivo && !_imageService.IsConfigured)
                 return Problem("Configure as credenciais do Cloudinary para enviar imagens.", statusCode: 503);
 
             string? novaUrl = null;
             try
             {
-                if (dto.ArquivoImagem is not null)
-                    novaUrl = await _imageService.UploadImageAsync(dto.ArquivoImagem, ImageFolder.Filmes);
+                if (temArquivo)
+                    novaUrl = await _imageService.UploadImageAsync(dto.ArquivoImagem!, ImageFolder.Filmes);
             }
-
             catch (ArgumentException erro) { return BadRequest(erro.Message); }
             catch (HttpRequestException) { return Problem("Falha ao enviar a capa ao Cloudinary.", statusCode: 502); }
 

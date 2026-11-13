@@ -32,7 +32,7 @@ public class GeneroRepository : IGeneroRepository
     public Task<List<Genero>> BuscarPorIds(IReadOnlyCollection<int> ids)
     {
         var idsArray = ids.ToArray();
-        return _context.Genero.AsNoTracking().Where(g => idsArray.Contains(g.IdGenero)).ToListAsync();
+        return _context.Genero.Where(g => idsArray.Contains(g.IdGenero)).ToListAsync();
     }
 
     public Task<List<Genero>> BuscarporIds(IReadOnlyCollection<int> ids) => BuscarPorIds(ids);

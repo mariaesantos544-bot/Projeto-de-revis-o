@@ -25,12 +25,12 @@ public class FilmeDTO : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if(ArquivoImagem is not null && !string.IsNullOrWhiteSpace(ImagemCapa))
+        if (ArquivoImagem is not null && ArquivoImagem.Length > 0 && !string.IsNullOrWhiteSpace(ImagemCapa))
         {
-            yield return new ValidationResult("Envie ArquivoImagem ou ImagemCapa, não os dois", new[] {nameof(ArquivoImagem), nameof(ImagemCapa)});
+            yield return new ValidationResult("Envie ArquivoImagem ou ImagemCapa, não os dois", new[] { nameof(ArquivoImagem), nameof(ImagemCapa) });
         }
 
-        if(DataLancamento.Year < 1888 || DataLancamento.Year > DateTime.UtcNow.Year)
+        if (DataLancamento.Year < 1888 || DataLancamento.Year > DateTime.UtcNow.Year)
         {
             yield return new ValidationResult("O ano de lançamento do filme deve ser entre 1888 e o ano atual", new[] { nameof(DataLancamento) });
         }

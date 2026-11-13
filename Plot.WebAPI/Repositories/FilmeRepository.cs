@@ -24,7 +24,22 @@ public class FilmeRepository : IFilmeRepository
             filmeExistente.Duracao = filme.Duracao;
             filmeExistente.DataLancamento = filme.DataLancamento;
             filmeExistente.ImagemCapa = filme.ImagemCapa;
-            filmeExistente.IdGenero = filme.IdGenero;
+
+            filmeExistente.IdGenero.Clear();
+            foreach (var genero in filme.IdGenero)
+            {
+                var trackedGenero = await _context.Genero.FindAsync(genero.IdGenero);
+                if (trackedGenero != null)
+                {
+                    filmeExistente.IdGenero.Add(trackedGenero);
+                }
+                else
+                {
+                    _context.Attach(genero);
+                    filmeExistente.IdGenero.Add(genero);
+                }
+            }
+
             await _context.SaveChangesAsync();
         }                           
     }
@@ -37,6 +52,12 @@ public class FilmeRepository : IFilmeRepository
     public async Task Cadastrar(Filme filme)
     {
         await _context.Filme.AddAsync(filme);
+
+        foreach (var genero in filme.IdGenero)
+        {
+            _context.Entry(genero).State = EntityState.Unchanged;
+        }
+
         await _context.SaveChangesAsync();
     }
 
