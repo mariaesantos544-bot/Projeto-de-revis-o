@@ -1,20 +1,20 @@
-﻿using Plot.WebAPI.Models;
+using Plot.WebAPI.Models;
 
-namespace Plot.WebAPI.Interfaces
+namespace Plot.WebAPI.Interfaces;
+
+public interface IGeneroRepository
 {
-    public interface IGeneroRepository
-    {
-        Task Cadastrar(Genero genero);
+    Task Cadastrar(Genero genero);
 
-        Task Atualizar(int id, Genero genero);
+    Task Atualizar(int id, Genero genero);
 
-        Task Excluir(int id);
+    Task Excluir(int id);
 
-        Task<Genero?> BuscarPorId(int id);
+    Task<Genero?> BuscarPorId(int id);
 
-        Task<List<Genero>> Listar();
+    Task<List<Genero>> Listar();
 
-        Task<List<Genero>> BuscarPorIds(IReadOnlyCollection<int> ids);
+    Task<List<Genero>> BuscarPorIds(IReadOnlyCollection<int> ids);
 
-    }
+    Task<List<Genero>> BuscarporIds(IReadOnlyCollection<int> ids);
 }
