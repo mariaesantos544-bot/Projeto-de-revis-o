@@ -1,15 +1,15 @@
-using Plot.WebAPI.BdContextEvent;
+using Microsoft.EntityFrameworkCore;
+using Plot.WebAPI.Context;
 using Plot.WebAPI.Interfaces;
 using Plot.WebAPI.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Plot.WebAPI.Repositories;
 
 public class GeneroRepository : IGeneroRepository
 {
-    private readonly PlotDBContext _context;
+    private readonly PlotDbContext _context;
 
-    public GeneroRepository(PlotDBContext context)
+    public GeneroRepository(PlotDbContext context)
     {
         _context = context;
     }
@@ -35,8 +35,6 @@ public class GeneroRepository : IGeneroRepository
         return _context.Genero.Where(g => idsArray.Contains(g.IdGenero)).ToListAsync();
     }
 
-    public Task<List<Genero>> BuscarporIds(IReadOnlyCollection<int> ids) => BuscarPorIds(ids);
-
     public async Task Cadastrar(Genero genero)
     {
         await _context.Genero.AddAsync(genero);
@@ -46,7 +44,6 @@ public class GeneroRepository : IGeneroRepository
     public async Task Excluir(int id)
     {
         var generoBuscado = await _context.Genero.Include(g => g.IdFilme).FirstOrDefaultAsync(g => g.IdGenero == id);
-
         if (generoBuscado != null)
         {
             generoBuscado.IdFilme.Clear();

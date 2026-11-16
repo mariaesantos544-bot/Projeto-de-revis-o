@@ -1,17 +1,17 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Plot.WebAPI.Models;
 
-namespace Plot.WebAPI.BdContextEvent;
+namespace Plot.WebAPI.Context;
 
-public partial class PlotDBContext : DbContext
+public partial class PlotDbContext : DbContext
 {
-    public PlotDBContext()
+    public PlotDbContext()
     {
     }
 
-    public PlotDBContext(DbContextOptions<PlotDBContext> options)
+    public PlotDbContext(DbContextOptions<PlotDbContext> options)
         : base(options)
     {
     }
@@ -30,7 +30,7 @@ public partial class PlotDBContext : DbContext
     {
         modelBuilder.Entity<Filme>(entity =>
         {
-            entity.HasKey(e => e.IdFilme).HasName("PK__Filme__6E8F2A7668BBFCAE");
+            entity.HasKey(e => e.IdFilme).HasName("PK__FILME__6E8F2A76BE6201E9");
 
             entity.HasMany(d => d.IdGenero).WithMany(p => p.IdFilme)
                 .UsingEntity<Dictionary<string, object>>(
@@ -38,11 +38,11 @@ public partial class PlotDBContext : DbContext
                     r => r.HasOne<Genero>().WithMany()
                         .HasForeignKey("IdGenero")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK_FilmeGenero_Genero"),
+                        .HasConstraintName("FK_GeneroFilmeGenero"),
                     l => l.HasOne<Filme>().WithMany()
                         .HasForeignKey("IdFilme")
                         .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK_FilmeGenero_Filme"),
+                        .HasConstraintName("FK_FilmeFilmeGenero"),
                     j =>
                     {
                         j.HasKey("IdFilme", "IdGenero");
@@ -51,12 +51,12 @@ public partial class PlotDBContext : DbContext
 
         modelBuilder.Entity<Genero>(entity =>
         {
-            entity.HasKey(e => e.IdGenero).HasName("PK__Genero__0F834988CC828A74");
+            entity.HasKey(e => e.IdGenero).HasName("PK__Genero__0F8349882A3C9BFC");
         });
 
         modelBuilder.Entity<Usuario>(entity =>
         {
-            entity.HasKey(e => e.IdUsuario).HasName("PK__Usuario__5B65BF97B8BC1A22");
+            entity.HasKey(e => e.IdUsuario).HasName("PK__Usuario__5B65BF97A1CD0980");
 
             entity.ToTable(tb => tb.HasTrigger("TR_UsuarioSoftDelete"));
 

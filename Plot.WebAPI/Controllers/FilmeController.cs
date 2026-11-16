@@ -1,4 +1,5 @@
-
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Plot.WebAPI.DTO;
 using Plot.WebAPI.Interfaces;
@@ -9,7 +10,7 @@ namespace Plot.WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class FilmeController : Controller
+    public class FilmeController : ControllerBase
     {
         private readonly IFilmeRepository _filmeRepository;
         private readonly IGeneroRepository _generoRepository;
@@ -23,9 +24,9 @@ namespace Plot.WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Listar([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10, [FromQuery] string? busca = null)
+        public async Task<IActionResult> Lista([FromQuery] int pagina = 1, [FromQuery] int tamanhoPagina = 10, [FromQuery] string? busca = null) 
         {
-            if (pagina < 1 || tamanhoPagina < 1 || tamanhoPagina > 100)
+            if (pagina < 1 || tamanhoPagina is < 1 or > 100)
                 return BadRequest("Página deve ser positiva e o tamanhoPagina deve estar entre 1 e 100.");
 
             var (items, total) = await _filmeRepository.ListarPaginado(pagina, tamanhoPagina, busca);
@@ -40,12 +41,13 @@ namespace Plot.WebAPI.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         [Consumes("multipart/form-data")]
         [RequestSizeLimit(11 * 1024 * 1024)]
         public async Task<IActionResult> Cadastrar([FromForm] FilmeDTO dto)
         {
             var generos = await BuscarGeneros(dto.IdGeneros ?? new List<int>());
-            if (generos is null) return BadRequest("Um ou mais IDs não existem.");
+            if (generos is null) return BadRequest("Um ou mais IDs de gênero não existem.");
 
             var temArquivo = dto.ArquivoImagem is not null && dto.ArquivoImagem.Length > 0;
 
@@ -61,7 +63,8 @@ namespace Plot.WebAPI.Controllers
             catch (ArgumentException erro) { return BadRequest(erro.Message); }
             catch (HttpRequestException) { return Problem("Falha ao enviar a capa ao Cloudinary.", statusCode: 502); }
 
-            var imagem = string.IsNullOrWhiteSpace(dto.ImagemCapa) ? novaUrl : dto.ImagemCapa;
+            var imagem = string.IsNullOrWhiteSpace(dto.ImagemCapa) ? null : dto.ImagemCapa;
+
             var filme = Converter(dto, generos, novaUrl ?? imagem);
 
             try
@@ -78,6 +81,7 @@ namespace Plot.WebAPI.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [Authorize]
         [Consumes("multipart/form-data")]
         [RequestSizeLimit(11 * 1024 * 1024)]
         public async Task<IActionResult> Atualizar(int id, [FromForm] FilmeDTO dto)
@@ -88,8 +92,9 @@ namespace Plot.WebAPI.Controllers
             var idsGeneros = (dto.IdGeneros != null && dto.IdGeneros.Count > 0)
                 ? dto.IdGeneros
                 : atual.IdGenero.Select(g => g.IdGenero).ToList();
+
             var generos = await BuscarGeneros(idsGeneros);
-            if (generos is null) return BadRequest("Um ou mais IDs não existem.");
+            if (generos is null) return BadRequest("Um ou mais IDs de gênero não existem.");
 
             var temArquivo = dto.ArquivoImagem is not null && dto.ArquivoImagem.Length > 0;
 
@@ -106,7 +111,6 @@ namespace Plot.WebAPI.Controllers
             catch (HttpRequestException) { return Problem("Falha ao enviar a capa ao Cloudinary.", statusCode: 502); }
 
             var imagem = novaUrl ?? (string.IsNullOrWhiteSpace(dto.ImagemCapa) ? atual.ImagemCapa : dto.ImagemCapa);
-
             try
             {
                 await _filmeRepository.Atualizar(id, Converter(dto, generos, imagem));
@@ -119,11 +123,13 @@ namespace Plot.WebAPI.Controllers
 
             if (!string.IsNullOrWhiteSpace(atual.ImagemCapa) && atual.ImagemCapa != imagem)
                 await _imageService.DeleteImageAsync(atual.ImagemCapa);
+
             return NoContent();
         }
 
         [HttpDelete("{id:int}")]
-            public async Task<IActionResult> Excluir(int id)
+        [Authorize]
+        public async Task<IActionResult> Excluir(int id)
         {
             var filme = await _filmeRepository.BuscarPorId(id);
             if (filme is null) return NotFound();
@@ -133,14 +139,14 @@ namespace Plot.WebAPI.Controllers
             return NoContent();
         }
 
-        private async Task<List<Genero>?> BuscarGeneros(List<int>? idGeneros)
+        private async Task<List<Genero>?> BuscarGeneros(List<int> ids)
         {
-            var distintos = idGeneros?.Distinct().ToArray() ?? Array.Empty<int>();
+            var distintos = ids.Distinct().ToArray();
             var generos = await _generoRepository.BuscarPorIds(distintos);
             return generos.Count == distintos.Length ? generos : null;
         }
 
-        private static Filme Converter(FilmeDTO dto, List<Genero> generos, string? imagemCapa) => new Filme
+        private static Filme Converter(FilmeDTO dto, List<Genero> generos, string? imagemCapa) => new()
         {
             Titulo = dto.Titulo,
             Sinopse = dto.Sinopse,

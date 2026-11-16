@@ -10,11 +10,13 @@ namespace Plot.WebAPI.Utils
         {
             var method = context.MethodInfo;
 
-            var anonymous = method.IsDefined(typeof(AllowAnonymousAttribute), true) || (method.DeclaringType?.IsDefined(typeof(AllowAnonymousAttribute), true) ?? false);
+            var anonymous = method.IsDefined(typeof(AllowAnonymousAttribute), true)
+                || (method.DeclaringType?.IsDefined(typeof(AllowAnonymousAttribute), true) ?? false);
 
-            var authorize = method.IsDefined(typeof(AuthorizeAttribute), true) || (method.DeclaringType?.IsDefined(typeof(AuthorizeAttribute), true) ?? false);
+            var authorized = method.IsDefined(typeof(AuthorizeAttribute), true)
+                || (method.DeclaringType?.IsDefined(typeof(AuthorizeAttribute), true) ?? false);
 
-            if (anonymous || !authorize) return;
+            if (anonymous || !authorized) return;
 
             operation.Security ??= new List<OpenApiSecurityRequirement>();
             operation.Security.Add(new OpenApiSecurityRequirement

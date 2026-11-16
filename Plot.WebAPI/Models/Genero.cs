@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Plot.WebAPI.Models;
 
-[Index("Nome", Name = "UQ__Genero__7D8FE3B2E1ECB601", IsUnique = true)]
+[Index("Nome", Name = "UQ__Genero__7D8FE3B2FB1A6023", IsUnique = true)]
 public partial class Genero
 {
     [Key]

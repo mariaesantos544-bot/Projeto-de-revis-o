@@ -1,8 +1,7 @@
-namespace Plot.WebAPI.Services
+namespace Plot.WebAPI.Services;
+
+public enum ImageFolder
 {
-    public enum ImageFolder
-    {
-        Filmes,
-        Usuarios
-    }
+    Filmes,
+    Usuarios
 }

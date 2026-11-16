@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Plot.WebAPI.BdContextEvent;
+using Plot.WebAPI.Context;
 using Plot.WebAPI.Interfaces;
 using Plot.WebAPI.Models;
 using Plot.WebAPI.Utils;
@@ -8,9 +8,9 @@ namespace Plot.WebAPI.Repositories;
 
 public class UsuarioRepository : IUsuarioRepository
 {
-    private readonly PlotDBContext _context;
+    private readonly PlotDbContext _context;
 
-    public UsuarioRepository(PlotDBContext context)
+    public UsuarioRepository(PlotDbContext context)
     {
         _context = context;
     }
@@ -25,10 +25,9 @@ public class UsuarioRepository : IUsuarioRepository
             usuarioExistente.TipoUsuario = usuario.TipoUsuario;
             usuarioExistente.Ativo = usuario.Ativo;
             usuarioExistente.FotoPerfil = usuario.FotoPerfil;
-
             if (!string.IsNullOrEmpty(usuario.Senha))
             {
-                usuarioExistente.Senha = Criptografia.gerarHash(usuario.Senha);
+                usuarioExistente.Senha = Criptografia.GerarHash(usuario.Senha);
             }
             await _context.SaveChangesAsync();
         }
@@ -43,7 +42,7 @@ public class UsuarioRepository : IUsuarioRepository
             return null;
         }
 
-        bool senhaValida = Criptografia.compararHash(senha, usuarioBuscado.Senha);
+        bool senhaValida = Criptografia.CompararHash(senha, usuarioBuscado.Senha);
 
         if (!senhaValida)
         {
@@ -60,7 +59,7 @@ public class UsuarioRepository : IUsuarioRepository
 
     public async Task Cadastrar(Usuario usuario)
     {
-        usuario.Senha = Criptografia.gerarHash(usuario.Senha);
+        usuario.Senha = Criptografia.GerarHash(usuario.Senha);
 
         await _context.Usuario.AddAsync(usuario);
         await _context.SaveChangesAsync();
@@ -69,7 +68,6 @@ public class UsuarioRepository : IUsuarioRepository
     public async Task Excluir(int id)
     {
         var usuarioBuscado = await _context.Usuario.FindAsync(id);
-
         if (usuarioBuscado != null)
         {
             _context.Usuario.Remove(usuarioBuscado);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Plot.WebAPI.Models;
 
-[Index("Email", Name = "UQ__Usuario__A9D105344AA57E93", IsUnique = true)]
+[Index("Email", Name = "UQ__Usuario__A9D1053455ED2423", IsUnique = true)]
 public partial class Usuario
 {
     [Key]

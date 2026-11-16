@@ -4,29 +4,28 @@ namespace Plot.WebAPI.DTO;
 
 public class UsuarioDTO : IValidatableObject
 {
-    [Required(ErrorMessage = "O nome do usuário é obrigatório")]
+    [Required(ErrorMessage = "O nome do usuário é obrigatório.")]
     [StringLength(100)]
     public string Nome { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "O email do usuário é obrigatório")]
-    [EmailAddress(ErrorMessage = "O email do usuário não é válido")]
+    [Required(ErrorMessage = "O e-mail é obrigatório.")]
+    [EmailAddress]
     [StringLength(50)]
     public string Email { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "A senha do usuário é obrigatória")]
+    [Required(ErrorMessage = "A senha é obrigatória")]
     [MinLength(8)]
     public string Senha { get; set; } = string.Empty;
 
     public string? FotoPerfil { get; set; }
 
     public IFormFile? ArquivoImagem { get; set; }
-    public string TipoUsuario { get; internal set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         if (ArquivoImagem is not null && !string.IsNullOrWhiteSpace(FotoPerfil))
-        {
-            yield return new ValidationResult("Envie ArquivoImagem ou FotoPerfil, não os dois", new[] { nameof(ArquivoImagem), nameof(FotoPerfil) });
-        }
+            yield return new ValidationResult(
+                "Envie ArquivoImagem ou FotoPerfil, não os dois.",
+                new[] { nameof(ArquivoImagem), nameof(FotoPerfil) });
     }
 }

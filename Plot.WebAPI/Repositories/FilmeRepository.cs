@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Plot.WebAPI.BdContextEvent;
+using Plot.WebAPI.Context;
 using Plot.WebAPI.Interfaces;
 using Plot.WebAPI.Models;
 
@@ -7,9 +7,9 @@ namespace Plot.WebAPI.Repositories;
 
 public class FilmeRepository : IFilmeRepository
 {
-    private readonly PlotDBContext _context;
+    private readonly PlotDbContext _context;
 
-    public FilmeRepository(PlotDBContext context)
+    public FilmeRepository(PlotDbContext context)
     {
         _context = context;
     }
@@ -17,6 +17,7 @@ public class FilmeRepository : IFilmeRepository
     public async Task Atualizar(int id, Filme filme)
     {
         var filmeExistente = await _context.Filme.Include(f => f.IdGenero).FirstOrDefaultAsync(f => f.IdFilme == id);
+
         if (filmeExistente != null)
         {
             filmeExistente.Titulo = filme.Titulo;
@@ -26,15 +27,12 @@ public class FilmeRepository : IFilmeRepository
             filmeExistente.ImagemCapa = filme.ImagemCapa;
 
             var novosIds = filme.IdGenero.Select(g => g.IdGenero).ToHashSet();
-
-            // 1. Remove apenas os gêneros que não estão mais presentes
             var generosParaRemover = filmeExistente.IdGenero.Where(g => !novosIds.Contains(g.IdGenero)).ToList();
             foreach (var genero in generosParaRemover)
             {
                 filmeExistente.IdGenero.Remove(genero);
             }
 
-            // 2. Adiciona novos gêneros que ainda não estavam associados
             var idsAtuais = filmeExistente.IdGenero.Select(g => g.IdGenero).ToHashSet();
             foreach (var genero in filme.IdGenero.Where(g => !idsAtuais.Contains(g.IdGenero)))
             {
@@ -51,7 +49,7 @@ public class FilmeRepository : IFilmeRepository
             }
 
             await _context.SaveChangesAsync();
-        }                           
+        }
     }
 
     public async Task<Filme?> BuscarPorId(int id)
@@ -74,7 +72,6 @@ public class FilmeRepository : IFilmeRepository
     public async Task Excluir(int id)
     {
         var filmeBuscado = await _context.Filme.Include(f => f.IdGenero).FirstOrDefaultAsync(f => f.IdFilme == id);
-
         if (filmeBuscado != null)
         {
             filmeBuscado.IdGenero.Clear();
@@ -85,18 +82,17 @@ public class FilmeRepository : IFilmeRepository
 
     public async Task<(List<Filme> filmes, int total)> ListarPaginado(int pagina = 1, int tamanhoPagina = 10, string? busca = null)
     {
-        var query = _context.Filme.Include(f => f.IdGenero).AsQueryable();
+        var query = _context.Filme.AsNoTracking().Include(f => f.IdGenero).AsQueryable();
 
-        if (!string.IsNullOrEmpty(busca))
+        if (!string.IsNullOrWhiteSpace(busca))
         {
             query = query.Where(f => f.Titulo.Contains(busca));
         }
-        
+
         int total = await query.CountAsync();
 
         var items = await query
-            .OrderBy(f => f.Titulo)
-            .ThenBy(f => f.IdFilme)
+            .OrderBy(f => f.Titulo).ThenBy(f => f.IdFilme)
             .Skip((pagina - 1) * tamanhoPagina)
             .Take(tamanhoPagina)
             .ToListAsync();
