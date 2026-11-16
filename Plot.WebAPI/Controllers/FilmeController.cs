@@ -85,7 +85,9 @@ namespace Plot.WebAPI.Controllers
             var atual = await _filmeRepository.BuscarPorId(id);
             if (atual is null) return NotFound();
 
-            var idsGeneros = dto.IdGeneros ?? atual.IdGenero.Select(g => g.IdGenero).ToList();
+            var idsGeneros = (dto.IdGeneros != null && dto.IdGeneros.Count > 0)
+                ? dto.IdGeneros
+                : atual.IdGenero.Select(g => g.IdGenero).ToList();
             var generos = await BuscarGeneros(idsGeneros);
             if (generos is null) return BadRequest("Um ou mais IDs não existem.");
 
@@ -115,8 +117,8 @@ namespace Plot.WebAPI.Controllers
                 throw;
             }
 
-            if(!string.IsNullOrWhiteSpace(atual.ImagemCapa!) && atual.ImagemCapa != imagem)
-            await _imageService.DeleteImageAsync(atual.ImagemCapa);
+            if (!string.IsNullOrWhiteSpace(atual.ImagemCapa) && atual.ImagemCapa != imagem)
+                await _imageService.DeleteImageAsync(atual.ImagemCapa);
             return NoContent();
         }
 

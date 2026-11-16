@@ -20,6 +20,7 @@ public class UsuarioDTO : IValidatableObject
     public string? FotoPerfil { get; set; }
 
     public IFormFile? ArquivoImagem { get; set; }
+    public string TipoUsuario { get; internal set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

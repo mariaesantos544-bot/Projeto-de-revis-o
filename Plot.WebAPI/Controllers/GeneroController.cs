@@ -36,8 +36,12 @@ public class GeneroController : ControllerBase
     public async Task<IActionResult> Cadastrar([FromBody] GeneroDTO dto)
     {
         var genero = new Genero { Nome = dto.Nome };
-        await _generoRepository.Cadastrar(genero);
-        return CreatedAtAction(nameof(BuscarPorId), new { id = genero.IdGenero }, genero);
+
+        try
+        {
+            await _generoRepository.Cadastrar(genero)
+        }
+       
     }
 
     [HttpPut("{id:int}")]

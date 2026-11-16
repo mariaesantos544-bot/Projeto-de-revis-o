@@ -25,8 +25,18 @@ public class FilmeRepository : IFilmeRepository
             filmeExistente.DataLancamento = filme.DataLancamento;
             filmeExistente.ImagemCapa = filme.ImagemCapa;
 
-            filmeExistente.IdGenero.Clear();
-            foreach (var genero in filme.IdGenero)
+            var novosIds = filme.IdGenero.Select(g => g.IdGenero).ToHashSet();
+
+            // 1. Remove apenas os gêneros que não estão mais presentes
+            var generosParaRemover = filmeExistente.IdGenero.Where(g => !novosIds.Contains(g.IdGenero)).ToList();
+            foreach (var genero in generosParaRemover)
+            {
+                filmeExistente.IdGenero.Remove(genero);
+            }
+
+            // 2. Adiciona novos gêneros que ainda não estavam associados
+            var idsAtuais = filmeExistente.IdGenero.Select(g => g.IdGenero).ToHashSet();
+            foreach (var genero in filme.IdGenero.Where(g => !idsAtuais.Contains(g.IdGenero)))
             {
                 var trackedGenero = await _context.Genero.FindAsync(genero.IdGenero);
                 if (trackedGenero != null)
@@ -63,10 +73,11 @@ public class FilmeRepository : IFilmeRepository
 
     public async Task Excluir(int id)
     {
-        var filmeBuscado = await _context.Filme.FirstOrDefaultAsync(f => f.IdFilme == id);
+        var filmeBuscado = await _context.Filme.Include(f => f.IdGenero).FirstOrDefaultAsync(f => f.IdFilme == id);
 
         if (filmeBuscado != null)
         {
+            filmeBuscado.IdGenero.Clear();
             _context.Filme.Remove(filmeBuscado);
             await _context.SaveChangesAsync();
         }

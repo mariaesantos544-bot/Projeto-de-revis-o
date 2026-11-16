@@ -45,10 +45,11 @@ public class GeneroRepository : IGeneroRepository
 
     public async Task Excluir(int id)
     {
-        var generoBuscado = await _context.Genero.FindAsync(id);
+        var generoBuscado = await _context.Genero.Include(g => g.IdFilme).FirstOrDefaultAsync(g => g.IdGenero == id);
 
         if (generoBuscado != null)
         {
+            generoBuscado.IdFilme.Clear();
             _context.Genero.Remove(generoBuscado);
             await _context.SaveChangesAsync();
         }
